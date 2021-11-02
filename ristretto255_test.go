@@ -348,15 +348,3 @@ func testConstant(t *testing.T, f *field.Element, decimal string) {
 		t.Errorf("expected %x", buf)
 	}
 }
-
-func TestAffine(t *testing.T) {
-	ristrettoBasepoint := (&Element{}).Base()
-	x, y := ristrettoBasepoint.ToAffineCoordinate()
-	result, err := ToExtendedProjectveCoordinate(x, y)
-	if err != nil {
-		t.Errorf(err.Error())
-	}
-	if ristrettoBasepoint.Equal(result) != 1 {
-		t.Fatal("invalid point")
-	}
-}

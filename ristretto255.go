@@ -16,7 +16,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"errors"
-	"math/big"
 
 	"filippo.io/edwards25519"
 	"filippo.io/edwards25519/field"
@@ -505,47 +504,4 @@ func (e *Element) UnmarshalText(text []byte) error {
 func (e *Element) String() string {
 	result, _ := e.MarshalText()
 	return string(result)
-}
-
-// Add coordinate transform
-func (e *Element) ToAffineCoordinate() (*big.Int, *big.Int) {
-	X, Y, Z, _ := e.r.ExtendedCoordinates()
-	inverseZ := new(field.Element).Invert(Z)
-	xByte := X.Multiply(X, inverseZ).Bytes()
-	yByte := Y.Multiply(Y, inverseZ).Bytes()
-	if inverseZ.Equal(zero) == 0 {
-		return new(big.Int).SetBytes(reverse(xByte)), new(big.Int).SetBytes(reverse(yByte))
-	}
-	return big.NewInt(0), big.NewInt(1)
-}
-
-func reverse(input []byte) []byte {
-	result := make([]byte, len(input))
-	for i := 0; i < len(result); i++ {
-		result[i] = input[31-i]
-	}
-	return result
-}
-
-func ToExtendedProjectveCoordinate(x *big.Int, y *big.Int) (*Element, error) {
-	// Assume that len(x) is 32
-	xbyte := reverse(x.FillBytes(make([]byte, 32)))
-	ybyte := reverse(y.FillBytes(make([]byte, 32)))
-	X, err := new(field.Element).SetBytes(xbyte)
-	if err != nil {
-		return nil, err
-	}
-	Y, err := new(field.Element).SetBytes(ybyte)
-	if err != nil {
-		return nil, err
-	}
-	T := new(field.Element).Multiply(X, Y)
-	resultPoint := new(edwards25519.Point)
-	resultPoint, err = resultPoint.SetExtendedCoordinates(X, Y, new(field.Element).One(), T)
-	if err != nil {
-		return nil, err
-	}
-	return &Element{
-		r: *resultPoint,
-	}, nil
 }
